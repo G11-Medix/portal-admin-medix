@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useMemo, useState } from "react";
 
 import { AppointmentDetailCard } from "@/components/dashboard/appointment-detail-card";
 import { AppointmentsTable } from "@/components/dashboard/appointments-table";
@@ -11,28 +12,33 @@ import { SearchInput } from "@/components/dashboard/search-input";
 import { SectionHeader } from "@/components/dashboard/section-header";
 import {
   appointmentStatusOptions,
-  appointmentsMock,
-  ipsOptions,
-} from "@/lib/mock/appointments";
-import { type AppointmentStatus } from "@/types/admin";
+  type AppointmentAdminRow,
+  type InstitutionOption,
+} from "@/types/admin";
 
-export function AppointmentsView() {
-  const [isLoading, setIsLoading] = useState(true);
+type AppointmentsViewProps = {
+  appointments: AppointmentAdminRow[];
+  institutions: InstitutionOption[];
+  selectedInstitutionId?: number;
+  error?: string;
+};
+
+export function AppointmentsView({
+  appointments,
+  institutions,
+  selectedInstitutionId,
+  error,
+}: AppointmentsViewProps) {
+  const router = useRouter();
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"all" | AppointmentStatus>("all");
-  const [ipsFilter, setIpsFilter] = useState<"all" | string>("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | string>("all");
   const [dateFilter, setDateFilter] = useState("");
   const [selectedAppointmentId, setSelectedAppointmentId] = useState<string>();
-
-  useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 350);
-    return () => clearTimeout(timer);
-  }, []);
 
   const filteredAppointments = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase();
 
-    return appointmentsMock.filter((appointment) => {
+    return appointments.filter((appointment) => {
       const matchesSearch =
         normalizedSearch.length === 0 ||
         appointment.patientDocumentId.toLowerCase().includes(normalizedSearch) ||
@@ -43,25 +49,35 @@ export function AppointmentsView() {
       const matchesStatus =
         statusFilter === "all" || appointment.status === statusFilter;
       const matchesDate = dateFilter.length === 0 || appointment.date === dateFilter;
-      const matchesIps = ipsFilter === "all" || appointment.ips === ipsFilter;
 
-      return matchesSearch && matchesStatus && matchesDate && matchesIps;
+      return matchesSearch && matchesStatus && matchesDate;
     });
-  }, [dateFilter, ipsFilter, search, statusFilter]);
+  }, [appointments, dateFilter, search, statusFilter]);
 
   const selectedAppointment = filteredAppointments.find(
     (appointment) => appointment.id === selectedAppointmentId,
   );
+  const statusOptions = Array.from(
+    new Set([...appointmentStatusOptions, ...appointments.map((appointment) => appointment.status)]),
+  );
+  const selectedInstitution = institutions.find(
+    (institution) => institution.id === selectedInstitutionId,
+  );
+  const selectedInstitutionValue = selectedInstitution
+    ? String(selectedInstitution.id)
+    : "";
 
   const stats = [
     { label: "Citas visibles", value: filteredAppointments.length },
     {
-      label: "Confirmadas",
-      value: filteredAppointments.filter((item) => item.status === "confirmada").length,
+      label: "Programadas",
+      value: filteredAppointments.filter((item) => item.status === "scheduled").length,
     },
     {
       label: "Canceladas",
-      value: filteredAppointments.filter((item) => item.status === "cancelada").length,
+      value: filteredAppointments.filter((item) =>
+        ["cancelada", "cancelled"].includes(item.status),
+      ).length,
     },
     {
       label: "Reprogramadas",
@@ -72,9 +88,19 @@ export function AppointmentsView() {
   return (
     <section className="space-y-4">
       <SectionHeader
-        title="Visualizar citas agendadas"
-        description="Monitorea la agenda medica por estado, fecha e IPS para apoyar la operacion interna."
+        title="Agenda de citas por IPS"
+        description={
+          selectedInstitution
+            ? `Consulta las citas registradas para ${selectedInstitution.name}, con filtros por estado, fecha y busqueda rapida.`
+            : "Selecciona una IPS para consultar su agenda de citas."
+        }
       />
+
+      {error ? (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+          {error}
+        </div>
+      ) : null}
 
       <FilterBar>
         <SearchInput
@@ -93,12 +119,12 @@ export function AppointmentsView() {
             id="appointments-status"
             value={statusFilter}
             onChange={(event) =>
-              setStatusFilter(event.target.value as "all" | AppointmentStatus)
+              setStatusFilter(event.target.value)
             }
             className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200"
           >
             <option value="all">Todos</option>
-            {appointmentStatusOptions.map((status) => (
+            {statusOptions.map((status) => (
               <option key={status} value={status} className="capitalize">
                 {status}
               </option>
@@ -125,30 +151,32 @@ export function AppointmentsView() {
           </label>
           <select
             id="appointments-ips"
-            value={ipsFilter}
-            onChange={(event) => setIpsFilter(event.target.value)}
+            value={selectedInstitutionValue}
+            onChange={(event) => {
+              setSelectedAppointmentId(undefined);
+              router.push(`/dashboard/appointments?institutionId=${event.target.value}`);
+            }}
             className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200"
           >
-            <option value="all">Todas</option>
-            {ipsOptions.map((ips) => (
-              <option key={ips} value={ips}>
-                {ips}
-              </option>
-            ))}
+            {institutions.length === 0 ? (
+              <option value="">Sin IPS disponible</option>
+            ) : (
+              institutions.map((institution) => (
+                <option key={institution.id} value={institution.id}>
+                  {institution.name}
+                </option>
+              ))
+            )}
           </select>
         </div>
       </FilterBar>
 
       <QuickStats items={stats} />
 
-      {isLoading ? (
-        <div className="rounded-xl border border-slate-200 bg-white p-6 text-sm text-slate-600 shadow-sm">
-          Cargando agenda de citas...
-        </div>
-      ) : filteredAppointments.length === 0 ? (
+      {filteredAppointments.length === 0 ? (
         <EmptyState
           title="No hay citas con los criterios seleccionados"
-          description="Cambia los filtros de estado, fecha o IPS para continuar."
+          description="Cambia los filtros de estado o fecha para continuar. En esta version se carga la primera IPS disponible."
         />
       ) : (
         <>

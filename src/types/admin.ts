@@ -1,35 +1,23 @@
-export type UserRole =
-  | "super_admin"
-  | "operaciones"
-  | "medico"
-  | "recepcion"
-  | "soporte"
-  | "paciente";
-
-export type UserStatus = "activo" | "suspendido" | "pendiente" | "bloqueado";
-
-export type AppointmentStatus =
-  | "reservada"
-  | "confirmada"
-  | "cancelada"
-  | "reprogramada"
-  | "completada";
-
-export type AdminUser = {
+export type PatientAdminRow = {
   id: string;
   fullName: string;
   email: string;
+  phone?: string;
   documentId: string;
-  role: UserRole;
-  status: UserStatus;
-  institution?: string;
-  ips: string;
+  documentType: string;
+  status: string;
+  epsId: number;
   createdAt: string;
-  lastActivityAt: string;
-  notes?: string;
+  birthDate: string;
+  supabaseUserId?: string;
 };
 
-export type Appointment = {
+export type InstitutionOption = {
+  id: number;
+  name: string;
+};
+
+export type AppointmentAdminRow = {
   id: string;
   code: string;
   patientName: string;
@@ -40,7 +28,20 @@ export type Appointment = {
   ips: string;
   date: string;
   time: string;
-  status: AppointmentStatus;
+  status: string;
   observations?: string;
-  source: "portal_paciente" | "call_center" | "recepcion_ips";
+  source: string;
+  institutionId: number;
 };
+
+export const appointmentStatusOptions = [
+  "scheduled",
+  "cancelled",
+  "reservada",
+  "confirmada",
+  "cancelada",
+  "reprogramada",
+  "completada",
+] as const;
+
+export const patientStatusOptions = ["activo", "inactivo", "pendiente", "bloqueado"] as const;

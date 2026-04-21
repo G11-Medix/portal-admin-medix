@@ -1,9 +1,9 @@
-import { type Appointment } from "@/types/admin";
+import { type AppointmentAdminRow } from "@/types/admin";
 
 import { StatusBadge } from "@/components/dashboard/status-badge";
 
 type AppointmentDetailCardProps = {
-  appointment: Appointment;
+  appointment: AppointmentAdminRow;
 };
 
 export function AppointmentDetailCard({ appointment }: AppointmentDetailCardProps) {
@@ -34,10 +34,6 @@ export function AppointmentDetailCard({ appointment }: AppointmentDetailCardProp
         <div>
           <dt className="font-medium text-slate-500">Especialidad</dt>
           <dd>{appointment.specialty}</dd>
-        </div>
-        <div>
-          <dt className="font-medium text-slate-500">Institucion</dt>
-          <dd>{appointment.institution}</dd>
         </div>
         <div>
           <dt className="font-medium text-slate-500">IPS</dt>

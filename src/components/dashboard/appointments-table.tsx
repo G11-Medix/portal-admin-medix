@@ -1,9 +1,9 @@
-import { type Appointment } from "@/types/admin";
+import { type AppointmentAdminRow } from "@/types/admin";
 
 import { StatusBadge } from "@/components/dashboard/status-badge";
 
 type AppointmentsTableProps = {
-  appointments: Appointment[];
+  appointments: AppointmentAdminRow[];
   selectedAppointmentId?: string;
   onView: (appointmentId: string) => void;
 };
@@ -25,7 +25,6 @@ export function AppointmentsTable({
             <th className="px-4 py-3 font-semibold">Especialidad</th>
             <th className="px-4 py-3 font-semibold">Fecha</th>
             <th className="px-4 py-3 font-semibold">Hora</th>
-            <th className="px-4 py-3 font-semibold">Institucion</th>
             <th className="px-4 py-3 font-semibold">IPS</th>
             <th className="px-4 py-3 font-semibold">Estado</th>
             <th className="px-4 py-3 font-semibold">Accion</th>
@@ -41,7 +40,6 @@ export function AppointmentsTable({
               <td className="px-4 py-3">{appointment.specialty}</td>
               <td className="px-4 py-3">{appointment.date}</td>
               <td className="px-4 py-3">{appointment.time}</td>
-              <td className="px-4 py-3">{appointment.institution}</td>
               <td className="px-4 py-3">{appointment.ips}</td>
               <td className="px-4 py-3"><StatusBadge status={appointment.status} /></td>
               <td className="px-4 py-3">

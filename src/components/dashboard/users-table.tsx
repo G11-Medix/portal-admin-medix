@@ -1,9 +1,9 @@
-import { type AdminUser } from "@/types/admin";
+import { type PatientAdminRow } from "@/types/admin";
 
 import { StatusBadge } from "@/components/dashboard/status-badge";
 
 type UsersTableProps = {
-  users: AdminUser[];
+  users: PatientAdminRow[];
   selectedUserId?: string;
   onView: (userId: string) => void;
 };
@@ -14,12 +14,12 @@ export function UsersTable({ users, selectedUserId, onView }: UsersTableProps) {
       <table className="min-w-full text-left text-sm">
         <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-600">
           <tr>
-            <th className="px-4 py-3 font-semibold">Nombre</th>
-            <th className="px-4 py-3 font-semibold">Email</th>
-            <th className="px-4 py-3 font-semibold">Rol</th>
+            <th className="px-4 py-3 font-semibold">Paciente</th>
+            <th className="px-4 py-3 font-semibold">Correo</th>
+            <th className="px-4 py-3 font-semibold">Telefono</th>
             <th className="px-4 py-3 font-semibold">Estado</th>
             <th className="px-4 py-3 font-semibold">Creacion</th>
-            <th className="px-4 py-3 font-semibold">Ultimo acceso</th>
+            <th className="px-4 py-3 font-semibold">Nacimiento</th>
             <th className="px-4 py-3 font-semibold">Accion</th>
           </tr>
         </thead>
@@ -28,13 +28,13 @@ export function UsersTable({ users, selectedUserId, onView }: UsersTableProps) {
             <tr key={user.id} className="border-t border-slate-100 text-slate-700">
               <td className="px-4 py-3">
                 <p className="font-medium text-slate-900">{user.fullName}</p>
-                <p className="text-xs text-slate-500">CC {user.documentId}</p>
+                <p className="text-xs text-slate-500">{user.documentType} {user.documentId}</p>
               </td>
               <td className="px-4 py-3">{user.email}</td>
-              <td className="px-4 py-3 capitalize">{user.role.replace("_", " ")}</td>
+              <td className="px-4 py-3">{user.phone ?? "Sin telefono"}</td>
               <td className="px-4 py-3"><StatusBadge status={user.status} /></td>
               <td className="px-4 py-3">{user.createdAt}</td>
-              <td className="px-4 py-3">{user.lastActivityAt}</td>
+              <td className="px-4 py-3">{user.birthDate}</td>
               <td className="px-4 py-3">
                 <button
                   type="button"

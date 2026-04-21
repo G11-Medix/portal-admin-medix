@@ -1,5 +1,3 @@
-import Link from "next/link";
-
 type TopbarProps = {
   userEmail: string;
   onLogout: () => Promise<void>;
@@ -14,12 +12,6 @@ export function Topbar({ userEmail, onLogout }: TopbarProps) {
       </div>
 
       <div className="flex items-center gap-3">
-        <Link
-          href="/dashboard/settings"
-          className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
-        >
-          Settings
-        </Link>
         <form action={onLogout}>
           <button
             type="submit"
