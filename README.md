@@ -11,6 +11,7 @@ MVP en Next.js (App Router) + TypeScript + Tailwind + Supabase Auth con **Magic 
 
 ## Correr el codigo
 
-Remove-Item -Recurse -Force node_modules, .next
-npm install
-npm run build
+- Remove-Item -Recurse -Force node_modules, .next
+- copiar y cambiar datos del .env
+- npm install
+- npm run build
