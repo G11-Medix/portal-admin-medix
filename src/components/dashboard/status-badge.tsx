@@ -15,6 +15,8 @@ const statusStyles: Record<string, string> = {
   cancelada: "bg-rose-50 text-rose-700 ring-rose-600/20",
   reprogramada: "bg-amber-50 text-amber-700 ring-amber-600/20",
   completada: "bg-cyan-50 text-cyan-700 ring-cyan-600/20",
+  exito: "bg-emerald-50 text-emerald-700 ring-emerald-600/20",
+  error: "bg-rose-50 text-rose-700 ring-rose-600/20",
 };
 
 export function StatusBadge({ status }: StatusBadgeProps) {

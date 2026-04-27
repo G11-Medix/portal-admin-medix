@@ -1,9 +1,8 @@
 import { redirect } from "next/navigation";
 import { type ReactNode } from "react";
 
-import { Sidebar } from "@/components/sidebar";
-import { Topbar } from "@/components/topbar";
 import { logoutAction } from "@/app/dashboard/actions";
+import { DashboardShell } from "@/components/dashboard-shell";
 import { createClient } from "@/lib/supabase/server-client";
 
 type DashboardLayoutProps = {
@@ -23,12 +22,8 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen bg-slate-100 md:flex">
-      <Sidebar />
-      <div className="flex-1">
-        <Topbar userEmail={user.email ?? "sin email"} onLogout={logoutAction} />
-        <main className="px-6 py-6">{children}</main>
-      </div>
-    </div>
+    <DashboardShell userEmail={user.email ?? "sin email"} onLogout={logoutAction}>
+      {children}
+    </DashboardShell>
   );
 }

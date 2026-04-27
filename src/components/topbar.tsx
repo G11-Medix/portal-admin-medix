@@ -1,9 +1,18 @@
+"use client";
+
 type TopbarProps = {
   userEmail: string;
   onLogout: () => Promise<void>;
+  isSidebarHidden: boolean;
+  onToggleSidebar: () => void;
 };
 
-export function Topbar({ userEmail, onLogout }: TopbarProps) {
+export function Topbar({
+  userEmail,
+  onLogout,
+  isSidebarHidden,
+  onToggleSidebar,
+}: TopbarProps) {
   return (
     <header className="flex flex-col gap-4 border-b border-slate-200 bg-white px-6 py-4 md:flex-row md:items-center md:justify-between">
       <div>
@@ -12,6 +21,14 @@ export function Topbar({ userEmail, onLogout }: TopbarProps) {
       </div>
 
       <div className="flex items-center gap-3">
+        <button
+          type="button"
+          onClick={onToggleSidebar}
+          aria-expanded={!isSidebarHidden}
+          className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600"
+        >
+          {isSidebarHidden ? "Mostrar menu" : "Ocultar menu"}
+        </button>
         <form action={onLogout}>
           <button
             type="submit"
