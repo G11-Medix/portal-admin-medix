@@ -12,11 +12,19 @@ const navigation = [
   { href: "/dashboard/audit-reports", label: "Reportes auditoria" },
 ];
 
-export function Sidebar() {
+type SidebarProps = {
+  isHidden?: boolean;
+};
+
+export function Sidebar({ isHidden = false }: SidebarProps) {
   const pathname = usePathname();
 
   return (
-    <aside className="flex w-full flex-col gap-8 border-b border-slate-200 bg-white px-6 py-5 md:min-h-screen md:w-72 md:border-r md:border-b-0 md:px-5">
+    <aside
+      className={`w-full flex-col gap-8 border-b border-slate-200 bg-white px-6 py-5 md:min-h-screen md:w-72 md:border-r md:border-b-0 md:px-5 ${
+        isHidden ? "hidden" : "flex"
+      }`}
+    >
       <div className="flex items-center gap-3">
         <Image
           src="/logo_medix_bg.png"
