@@ -225,15 +225,30 @@ export function IntegrationsView({ institutions, error }: IntegrationsViewProps)
                       isSelected ? "bg-cyan-50" : "hover:bg-slate-50"
                     }`}
                   >
-                    <span className="flex items-center justify-between gap-3">
-                      <span className="font-semibold text-slate-900">{institution.name}</span>
-                      {health ? <HealthBadge status={health.status} /> : null}
-                    </span>
-                    <span className="mt-1 block text-sm text-slate-600">
-                      NIT {institution.nit}
-                    </span>
-                    <span className="mt-2 block truncate text-xs text-slate-500">
-                      {institution.serviceUrl || "Sin URL de servicio"}
+                    <span className="flex items-center gap-3">
+                      {institution.logoUrl ? (
+                        <img
+                          src={institution.logoUrl}
+                          alt={`Logo ${institution.name}`}
+                          className="h-10 w-10 shrink-0 rounded-lg border border-slate-200 bg-white object-contain p-1"
+                        />
+                      ) : (
+                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-slate-100 text-xs font-bold text-slate-500">
+                          {institution.name.slice(0, 2).toUpperCase()}
+                        </span>
+                      )}
+                      <span className="min-w-0 flex-1">
+                        <span className="flex items-center justify-between gap-2">
+                          <span className="truncate font-semibold text-slate-900">{institution.name}</span>
+                          {health ? <HealthBadge status={health.status} /> : null}
+                        </span>
+                        <span className="mt-0.5 block text-sm text-slate-600">
+                          NIT {institution.nit}
+                        </span>
+                        <span className="mt-1 block truncate text-xs text-slate-500">
+                          {institution.serviceUrl || "Sin URL de servicio"}
+                        </span>
+                      </span>
                     </span>
                   </button>
                 );
@@ -244,13 +259,26 @@ export function IntegrationsView({ institutions, error }: IntegrationsViewProps)
           {selectedInstitution ? (
             <article className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
               <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <p className="text-base font-semibold text-slate-900">
-                    {selectedInstitution.name}
-                  </p>
-                  <p className="mt-1 text-sm text-slate-600">
-                    Edita la informacion operativa y valida la URL exacta del servicio.
-                  </p>
+                <div className="flex items-center gap-3">
+                  {form.logoUrl ? (
+                    <img
+                      src={form.logoUrl}
+                      alt={`Logo ${selectedInstitution.name}`}
+                      className="h-12 w-12 shrink-0 rounded-xl border border-slate-200 bg-white object-contain p-1 shadow-sm"
+                    />
+                  ) : (
+                    <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-slate-100 text-sm font-bold text-slate-500">
+                      {selectedInstitution.name.slice(0, 2).toUpperCase()}
+                    </span>
+                  )}
+                  <div>
+                    <p className="text-base font-semibold text-slate-900">
+                      {selectedInstitution.name}
+                    </p>
+                    <p className="mt-0.5 text-sm text-slate-600">
+                      Edita la informacion operativa y valida la URL exacta del servicio.
+                    </p>
+                  </div>
                 </div>
                 <StatusBadge status={form.status} />
               </div>
