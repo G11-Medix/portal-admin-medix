@@ -21,16 +21,28 @@ export async function getSupabaseAccessToken() {
   return session?.access_token;
 }
 
-export async function medixApiFetch<T>(path: string, token: string): Promise<T> {
+type MedixApiFetchOptions = {
+  method?: string;
+  body?: unknown;
+};
+
+export async function medixApiFetch<T>(
+  path: string,
+  token: string,
+  options: MedixApiFetchOptions = {},
+): Promise<T> {
   const url = `${getMedixApiUrl()}${path.startsWith("/") ? path : `/${path}`}`;
 
   let response: Response;
   try {
     response = await fetch(url, {
+      method: options.method ?? "GET",
       headers: {
         Authorization: `Bearer ${token}`,
         Accept: "application/json",
+        ...(options.body === undefined ? {} : { "Content-Type": "application/json" }),
       },
+      body: options.body === undefined ? undefined : JSON.stringify(options.body),
       cache: "no-store",
     });
   } catch {

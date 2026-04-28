@@ -37,4 +37,26 @@ export type InstitucionResponse = {
   longitud: number | null;
   latitud: number | null;
   logo_url: string | null;
+  service_url: string | null;
+};
+
+export type InstitucionUpdatePayload = {
+  nombre?: string;
+  nit?: string;
+  direccion?: string | null;
+  telefono?: string | null;
+  estado?: string;
+  longitud?: number | null;
+  latitud?: number | null;
+  logo_url?: string | null;
+  service_url?: string | null;
+};
+
+export type InstitucionHealthResponse = {
+  id_institucion: number;
+  status: "UP" | "DOWN" | "NOT_CONFIGURED";
+  service_url: string | null;
+  status_code: number | null;
+  latency_ms: number | null;
+  message: string;
 };

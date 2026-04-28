@@ -17,6 +17,19 @@ export type InstitutionOption = {
   name: string;
 };
 
+export type IntegrationInstitutionRow = {
+  id: number;
+  name: string;
+  nit: string;
+  address: string;
+  phone: string;
+  status: string;
+  longitude: number | null;
+  latitude: number | null;
+  logoUrl: string;
+  serviceUrl: string;
+};
+
 export type AppointmentAdminRow = {
   id: string;
   code: string;

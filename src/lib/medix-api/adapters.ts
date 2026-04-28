@@ -1,5 +1,6 @@
 import {
   type AppointmentAdminRow,
+  type IntegrationInstitutionRow,
   type InstitutionOption,
   type PatientAdminRow,
 } from "@/types/admin";
@@ -30,6 +31,23 @@ export function toInstitutionOption(institution: InstitucionResponse): Instituti
   return {
     id: institution.id_institucion,
     name: institution.nombre,
+  };
+}
+
+export function toIntegrationInstitutionRow(
+  institution: InstitucionResponse,
+): IntegrationInstitutionRow {
+  return {
+    id: institution.id_institucion,
+    name: institution.nombre,
+    nit: institution.nit,
+    address: institution.direccion ?? "",
+    phone: institution.telefono ?? "",
+    status: normalizeStatus(institution.estado),
+    longitude: institution.longitud,
+    latitude: institution.latitud,
+    logoUrl: institution.logo_url ?? "",
+    serviceUrl: institution.service_url ?? "",
   };
 }
 

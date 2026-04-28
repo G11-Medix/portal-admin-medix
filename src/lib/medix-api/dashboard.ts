@@ -1,4 +1,5 @@
 import {
+  toIntegrationInstitutionRow,
   toAppointmentAdminRow,
   toInstitutionOption,
   toPatientAdminRow,
@@ -51,6 +52,16 @@ export async function getAppointmentsDashboardData(selectedInstitutionId?: numbe
     institutions: [],
     selectedInstitutionId: undefined as number | undefined,
   });
+}
+
+export async function getIntegrationsDashboardData() {
+  return withMedixApiData(async (token) => {
+    const institutions = await medixApiFetch<InstitucionResponse[]>(
+      "/api/instituciones/?limit=100",
+      token,
+    );
+    return institutions.map(toIntegrationInstitutionRow);
+  }, []);
 }
 
 async function withMedixApiData<T>(
