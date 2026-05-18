@@ -31,7 +31,8 @@ export async function medixApiFetch<T>(
   token: string,
   options: MedixApiFetchOptions = {},
 ): Promise<T> {
-  const url = `${getMedixApiUrl()}${path.startsWith("/") ? path : `/${path}`}`;
+  const apiBaseUrl = getMedixApiUrl();
+  const url = `${apiBaseUrl}${path.startsWith("/") ? path : `/${path}`}`;
 
   let response: Response;
   try {
@@ -47,7 +48,7 @@ export async function medixApiFetch<T>(
     });
   } catch {
     throw new MedixApiError(
-      "No fue posible conectar con medix-appointments-api. Verifica que este corriendo en http://localhost:8001.",
+      `No fue posible conectar con medix-appointments-api. Verifica que este corriendo en ${apiBaseUrl}.`,
     );
   }
 

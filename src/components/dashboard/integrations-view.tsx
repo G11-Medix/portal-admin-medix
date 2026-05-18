@@ -12,8 +12,13 @@ import { QuickStats } from "@/components/dashboard/quick-stats";
 import { SearchInput } from "@/components/dashboard/search-input";
 import { SectionHeader } from "@/components/dashboard/section-header";
 import { StatusBadge } from "@/components/dashboard/status-badge";
-import { type InstitucionHealthResponse } from "@/lib/medix-api/types";
+import {
+  type InstitucionHealthResponse,
+  type InstitucionUpdatePayload,
+} from "@/lib/medix-api/types";
 import { type IntegrationInstitutionRow } from "@/types/admin";
+
+/* eslint-disable @next/next/no-img-element -- IPS logos come from user-managed external URLs without a fixed remote domain allowlist. */
 
 type IntegrationsViewProps = {
   institutions: IntegrationInstitutionRow[];
@@ -35,6 +40,30 @@ type EditableInstitution = {
   logoUrl: string;
   serviceUrl: string;
 };
+
+type EditableInstitutionField = keyof EditableInstitution;
+
+const editableInstitutionFields: Array<{
+  key: EditableInstitutionField;
+  label: string;
+  placeholder?: string;
+  className?: string;
+}> = [
+  { key: "name", label: "Nombre" },
+  { key: "nit", label: "NIT" },
+  { key: "address", label: "Direccion" },
+  { key: "phone", label: "Telefono" },
+  { key: "status", label: "Estado" },
+  { key: "logoUrl", label: "Logo URL" },
+  { key: "longitude", label: "Longitud" },
+  { key: "latitude", label: "Latitud" },
+  {
+    key: "serviceUrl",
+    label: "URL servicio",
+    placeholder: "https://ips.example.com",
+    className: "md:col-span-2",
+  },
+];
 
 export function IntegrationsView({ institutions, error }: IntegrationsViewProps) {
   const [items, setItems] = useState(institutions);
@@ -72,23 +101,7 @@ export function IntegrationsView({ institutions, error }: IntegrationsViewProps)
     });
   }, [items, search]);
 
-  const stats = [
-    { label: "IPS gestionadas", value: items.length },
-    {
-      label: "Con URL servicio",
-      value: items.filter((institution) => institution.serviceUrl).length,
-    },
-    {
-      label: "Servicios arriba",
-      value: Object.values(healthByInstitution).filter((health) => health.status === "UP")
-        .length,
-    },
-    {
-      label: "Requieren revision",
-      value: Object.values(healthByInstitution).filter((health) => health.status === "DOWN")
-        .length,
-    },
-  ];
+  const stats = getIntegrationStats(items, healthByInstitution);
 
   function selectInstitution(institution: IntegrationInstitutionRow) {
     setSelectedInstitutionId(institution.id);
@@ -97,7 +110,7 @@ export function IntegrationsView({ institutions, error }: IntegrationsViewProps)
     setActionError("");
   }
 
-  function updateField(field: keyof EditableInstitution, value: string) {
+  function updateField(field: EditableInstitutionField, value: string) {
     setForm((currentForm) => ({ ...currentForm, [field]: value }));
   }
 
@@ -108,18 +121,17 @@ export function IntegrationsView({ institutions, error }: IntegrationsViewProps)
 
     setStatusMessage("");
     setActionError("");
+    const validationError = getInstitutionFormError(form);
+    if (validationError) {
+      setActionError(validationError);
+      return;
+    }
+
     startSaving(async () => {
-      const result = await updateInstitutionAction(selectedInstitution.id, {
-        nombre: form.name,
-        nit: form.nit,
-        direccion: nullableText(form.address),
-        telefono: nullableText(form.phone),
-        estado: form.status.toUpperCase(),
-        longitud: nullableNumber(form.longitude),
-        latitud: nullableNumber(form.latitude),
-        logo_url: nullableText(form.logoUrl),
-        service_url: nullableText(form.serviceUrl),
-      });
+      const result = await updateInstitutionAction(
+        selectedInstitution.id,
+        toInstitutionUpdatePayload(form),
+      );
 
       if (result.error || !result.data) {
         setActionError(result.error ?? "No fue posible actualizar la institucion.");
@@ -204,152 +216,244 @@ export function IntegrationsView({ institutions, error }: IntegrationsViewProps)
         />
       ) : (
         <section className="grid gap-4 xl:grid-cols-[0.85fr_1.15fr]">
-          <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-            <div className="border-b border-slate-100 p-4">
-              <p className="text-sm font-semibold text-slate-900">Instituciones</p>
-              <p className="mt-1 text-sm text-slate-600">
-                {filteredInstitutions.length} IPS visibles.
-              </p>
-            </div>
-            <div className="max-h-[720px] overflow-y-auto">
-              {filteredInstitutions.map((institution) => {
-                const health = healthByInstitution[institution.id];
-                const isSelected = institution.id === selectedInstitutionId;
-
-                return (
-                  <button
-                    key={institution.id}
-                    type="button"
-                    onClick={() => selectInstitution(institution)}
-                    className={`block w-full border-b border-slate-100 p-4 text-left transition focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-cyan-600 ${
-                      isSelected ? "bg-cyan-50" : "hover:bg-slate-50"
-                    }`}
-                  >
-                    <span className="flex items-center gap-3">
-                      {institution.logoUrl ? (
-                        <img
-                          src={institution.logoUrl}
-                          alt={`Logo ${institution.name}`}
-                          className="h-10 w-10 shrink-0 rounded-lg border border-slate-200 bg-white object-contain p-1"
-                        />
-                      ) : (
-                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-slate-100 text-xs font-bold text-slate-500">
-                          {institution.name.slice(0, 2).toUpperCase()}
-                        </span>
-                      )}
-                      <span className="min-w-0 flex-1">
-                        <span className="flex items-center justify-between gap-2">
-                          <span className="truncate font-semibold text-slate-900">{institution.name}</span>
-                          {health ? <HealthBadge status={health.status} /> : null}
-                        </span>
-                        <span className="mt-0.5 block text-sm text-slate-600">
-                          NIT {institution.nit}
-                        </span>
-                        <span className="mt-1 block truncate text-xs text-slate-500">
-                          {institution.serviceUrl || "Sin URL de servicio"}
-                        </span>
-                      </span>
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+          <InstitutionList
+            institutions={filteredInstitutions}
+            healthByInstitution={healthByInstitution}
+            selectedInstitutionId={selectedInstitutionId}
+            onSelect={selectInstitution}
+          />
 
           {selectedInstitution ? (
-            <article className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  {form.logoUrl ? (
-                    <img
-                      src={form.logoUrl}
-                      alt={`Logo ${selectedInstitution.name}`}
-                      className="h-12 w-12 shrink-0 rounded-xl border border-slate-200 bg-white object-contain p-1 shadow-sm"
-                    />
-                  ) : (
-                    <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-slate-100 text-sm font-bold text-slate-500">
-                      {selectedInstitution.name.slice(0, 2).toUpperCase()}
-                    </span>
-                  )}
-                  <div>
-                    <p className="text-base font-semibold text-slate-900">
-                      {selectedInstitution.name}
-                    </p>
-                    <p className="mt-0.5 text-sm text-slate-600">
-                      Edita la informacion operativa y valida la URL exacta del servicio.
-                    </p>
-                  </div>
-                </div>
-                <StatusBadge status={form.status} />
-              </div>
-
-              <div className="mt-5 grid gap-4 md:grid-cols-2">
-                <TextField label="Nombre" value={form.name} onChange={(value) => updateField("name", value)} />
-                <TextField label="NIT" value={form.nit} onChange={(value) => updateField("nit", value)} />
-                <TextField label="Direccion" value={form.address} onChange={(value) => updateField("address", value)} />
-                <TextField label="Telefono" value={form.phone} onChange={(value) => updateField("phone", value)} />
-                <TextField label="Estado" value={form.status} onChange={(value) => updateField("status", value)} />
-                <TextField label="Logo URL" value={form.logoUrl} onChange={(value) => updateField("logoUrl", value)} />
-                <TextField label="Longitud" value={form.longitude} onChange={(value) => updateField("longitude", value)} />
-                <TextField label="Latitud" value={form.latitude} onChange={(value) => updateField("latitude", value)} />
-                <div className="md:col-span-2">
-                  <TextField
-                    label="URL servicio"
-                    value={form.serviceUrl}
-                    onChange={(value) => updateField("serviceUrl", value)}
-                    placeholder="https://ips.example.com"
-                  />
-                </div>
-              </div>
-
-              <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div>
-                    <p className="text-sm font-semibold text-slate-900">Health check</p>
-                    <p className="mt-1 text-sm text-slate-600">
-                      Prueba exactamente la URL configurada para esta institucion.
-                    </p>
-                  </div>
-                  {selectedHealth ? <HealthBadge status={selectedHealth.status} /> : null}
-                </div>
-
-                <dl className="mt-4 grid gap-3 md:grid-cols-3">
-                  <HealthMetric label="HTTP" value={selectedHealth?.status_code ?? "N/A"} />
-                  <HealthMetric label="Latencia" value={selectedHealth?.latency_ms != null ? `${selectedHealth.latency_ms} ms` : "N/A"} />
-                  <HealthMetric label="Ultima revision" value={selectedHealth ? formatDateTime(selectedHealth.checkedAt) : "Sin revisar"} />
-                </dl>
-                <p className="mt-3 text-sm text-slate-600">
-                  {selectedHealth?.message ?? "Ejecuta un health check para ver el estado actual."}
-                </p>
-              </div>
-
-              <div className="mt-5 flex flex-wrap gap-3">
-                <button
-                  type="button"
-                  onClick={saveInstitution}
-                  disabled={isSaving}
-                  className="rounded-lg bg-cyan-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-cyan-800 disabled:cursor-not-allowed disabled:bg-slate-300"
-                >
-                  {isSaving ? "Guardando..." : "Guardar cambios"}
-                </button>
-                <button
-                  type="button"
-                  onClick={checkHealth}
-                  disabled={isCheckingHealth || !form.serviceUrl.trim() || hasPendingChanges}
-                  className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:text-slate-400"
-                >
-                  {isCheckingHealth
-                    ? "Validando..."
-                    : hasPendingChanges
-                      ? "Guarda antes de validar"
-                      : "Ejecutar health check"}
-                </button>
-              </div>
-            </article>
+            <InstitutionEditor
+              form={form}
+              institution={selectedInstitution}
+              selectedHealth={selectedHealth}
+              hasPendingChanges={hasPendingChanges}
+              isCheckingHealth={isCheckingHealth}
+              isSaving={isSaving}
+              onCheckHealth={checkHealth}
+              onSave={saveInstitution}
+              onUpdateField={updateField}
+            />
           ) : null}
         </section>
       )}
     </section>
+  );
+}
+
+function InstitutionList({
+  institutions,
+  healthByInstitution,
+  selectedInstitutionId,
+  onSelect,
+}: {
+  institutions: IntegrationInstitutionRow[];
+  healthByInstitution: Record<number, HealthSnapshot>;
+  selectedInstitutionId?: number;
+  onSelect: (institution: IntegrationInstitutionRow) => void;
+}) {
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div className="border-b border-slate-100 p-4">
+        <p className="text-sm font-semibold text-slate-900">Instituciones</p>
+        <p className="mt-1 text-sm text-slate-600">
+          {institutions.length} IPS visibles.
+        </p>
+      </div>
+      <div className="max-h-[720px] overflow-y-auto">
+        {institutions.map((institution) => {
+          const health = healthByInstitution[institution.id];
+          const isSelected = institution.id === selectedInstitutionId;
+
+          return (
+            <button
+              key={institution.id}
+              type="button"
+              onClick={() => onSelect(institution)}
+              className={`block w-full border-b border-slate-100 p-4 text-left transition focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-cyan-600 ${
+                isSelected ? "bg-cyan-50" : "hover:bg-slate-50"
+              }`}
+            >
+              <span className="flex items-center gap-3">
+                <InstitutionLogo institution={institution} size="sm" />
+                <span className="min-w-0 flex-1">
+                  <span className="flex items-center justify-between gap-2">
+                    <span className="truncate font-semibold text-slate-900">
+                      {institution.name}
+                    </span>
+                    {health ? <HealthBadge status={health.status} /> : null}
+                  </span>
+                  <span className="mt-0.5 block text-sm text-slate-600">
+                    NIT {institution.nit}
+                  </span>
+                  <span className="mt-1 block truncate text-xs text-slate-500">
+                    {institution.serviceUrl || "Sin URL de servicio"}
+                  </span>
+                </span>
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function InstitutionEditor({
+  form,
+  institution,
+  selectedHealth,
+  hasPendingChanges,
+  isCheckingHealth,
+  isSaving,
+  onCheckHealth,
+  onSave,
+  onUpdateField,
+}: {
+  form: EditableInstitution;
+  institution: IntegrationInstitutionRow;
+  selectedHealth?: HealthSnapshot;
+  hasPendingChanges: boolean;
+  isCheckingHealth: boolean;
+  isSaving: boolean;
+  onCheckHealth: () => void;
+  onSave: () => void;
+  onUpdateField: (field: EditableInstitutionField, value: string) => void;
+}) {
+  return (
+    <article className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <InstitutionLogo
+            institution={{ ...institution, logoUrl: form.logoUrl }}
+            size="lg"
+          />
+          <div>
+            <p className="text-base font-semibold text-slate-900">
+              {institution.name}
+            </p>
+            <p className="mt-0.5 text-sm text-slate-600">
+              Edita la informacion operativa y valida la URL exacta del servicio.
+            </p>
+          </div>
+        </div>
+        <StatusBadge status={form.status} />
+      </div>
+
+      <div className="mt-5 grid gap-4 md:grid-cols-2">
+        {editableInstitutionFields.map((field) => (
+          <div key={field.key} className={field.className}>
+            <TextField
+              label={field.label}
+              value={form[field.key]}
+              onChange={(value) => onUpdateField(field.key, value)}
+              placeholder={field.placeholder}
+            />
+          </div>
+        ))}
+      </div>
+
+      <HealthPanel selectedHealth={selectedHealth} />
+
+      <div className="mt-5 flex flex-wrap gap-3">
+        <button
+          type="button"
+          onClick={onSave}
+          disabled={isSaving}
+          className="rounded-lg bg-cyan-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-cyan-800 disabled:cursor-not-allowed disabled:bg-slate-300"
+        >
+          {isSaving ? "Guardando..." : "Guardar cambios"}
+        </button>
+        <button
+          type="button"
+          onClick={onCheckHealth}
+          disabled={isCheckingHealth || !form.serviceUrl.trim() || hasPendingChanges}
+          className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:text-slate-400"
+        >
+          {isCheckingHealth
+            ? "Validando..."
+            : hasPendingChanges
+              ? "Guarda antes de validar"
+              : "Ejecutar health check"}
+        </button>
+      </div>
+    </article>
+  );
+}
+
+function InstitutionLogo({
+  institution,
+  size,
+}: {
+  institution: Pick<IntegrationInstitutionRow, "logoUrl" | "name">;
+  size: "sm" | "lg";
+}) {
+  const imageClassName =
+    size === "sm"
+      ? "h-10 w-10 rounded-lg"
+      : "h-12 w-12 rounded-xl shadow-sm";
+  const fallbackClassName =
+    size === "sm"
+      ? "h-10 w-10 rounded-lg text-xs"
+      : "h-12 w-12 rounded-xl text-sm";
+
+  if (institution.logoUrl) {
+    return (
+      <img
+        src={institution.logoUrl}
+        alt={`Logo ${institution.name}`}
+        className={`${imageClassName} shrink-0 border border-slate-200 bg-white object-contain p-1`}
+      />
+    );
+  }
+
+  return (
+    <span
+      className={`${fallbackClassName} flex shrink-0 items-center justify-center border border-slate-200 bg-slate-100 font-bold text-slate-500`}
+    >
+      {institution.name.slice(0, 2).toUpperCase()}
+    </span>
+  );
+}
+
+function HealthPanel({ selectedHealth }: { selectedHealth?: HealthSnapshot }) {
+  return (
+    <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <p className="text-sm font-semibold text-slate-900">Health check</p>
+          <p className="mt-1 text-sm text-slate-600">
+            Prueba exactamente la URL configurada para esta institucion.
+          </p>
+        </div>
+        {selectedHealth ? <HealthBadge status={selectedHealth.status} /> : null}
+      </div>
+
+      <dl className="mt-4 grid gap-3 md:grid-cols-3">
+        <HealthMetric label="HTTP" value={selectedHealth?.status_code ?? "N/A"} />
+        <HealthMetric
+          label="Latencia"
+          value={
+            selectedHealth?.latency_ms != null
+              ? `${selectedHealth.latency_ms} ms`
+              : "N/A"
+          }
+        />
+        <HealthMetric
+          label="Ultima revision"
+          value={
+            selectedHealth
+              ? formatDateTime(selectedHealth.checkedAt)
+              : "Sin revisar"
+          }
+        />
+      </dl>
+      <p className="mt-3 text-sm text-slate-600">
+        {selectedHealth?.message ??
+          "Ejecuta un health check para ver el estado actual."}
+      </p>
+    </div>
   );
 }
 
@@ -417,6 +521,110 @@ function toEditableInstitution(institution?: IntegrationInstitutionRow): Editabl
     logoUrl: institution?.logoUrl ?? "",
     serviceUrl: institution?.serviceUrl ?? "",
   };
+}
+
+function toInstitutionUpdatePayload(
+  form: EditableInstitution,
+): InstitucionUpdatePayload {
+  return {
+    nombre: form.name,
+    nit: form.nit,
+    direccion: nullableText(form.address),
+    telefono: nullableText(form.phone),
+    estado: form.status.toUpperCase(),
+    longitud: nullableNumber(form.longitude),
+    latitud: nullableNumber(form.latitude),
+    logo_url: nullableText(form.logoUrl),
+    service_url: nullableText(form.serviceUrl),
+  };
+}
+
+function getInstitutionFormError(form: EditableInstitution) {
+  const longitudeError = getCoordinateError(form.longitude, "Longitud", -180, 180);
+  if (longitudeError) {
+    return longitudeError;
+  }
+
+  const latitudeError = getCoordinateError(form.latitude, "Latitud", -90, 90);
+  if (latitudeError) {
+    return latitudeError;
+  }
+
+  const logoUrlError = getUrlError(form.logoUrl, "Logo URL");
+  if (logoUrlError) {
+    return logoUrlError;
+  }
+
+  const serviceUrlError = getUrlError(form.serviceUrl, "URL servicio");
+  if (serviceUrlError) {
+    return serviceUrlError;
+  }
+
+  return undefined;
+}
+
+function getCoordinateError(
+  value: string,
+  label: string,
+  minValue: number,
+  maxValue: number,
+) {
+  const normalized = value.trim();
+  if (!normalized) {
+    return undefined;
+  }
+
+  const parsed = Number(normalized);
+  if (!Number.isFinite(parsed)) {
+    return `${label} debe ser un numero valido.`;
+  }
+
+  if (parsed < minValue || parsed > maxValue) {
+    return `${label} debe estar entre ${minValue} y ${maxValue}.`;
+  }
+
+  return undefined;
+}
+
+function getUrlError(value: string, label: string) {
+  const normalized = value.trim();
+  if (!normalized) {
+    return undefined;
+  }
+
+  try {
+    const url = new URL(normalized);
+    if (url.protocol === "http:" || url.protocol === "https:") {
+      return undefined;
+    }
+  } catch {
+    // Return the shared message below for invalid URLs.
+  }
+
+  return `${label} debe ser una URL valida que empiece por http:// o https://.`;
+}
+
+function getIntegrationStats(
+  institutions: IntegrationInstitutionRow[],
+  healthByInstitution: Record<number, HealthSnapshot>,
+) {
+  const healthSnapshots = Object.values(healthByInstitution);
+
+  return [
+    { label: "IPS gestionadas", value: institutions.length },
+    {
+      label: "Con URL servicio",
+      value: institutions.filter((institution) => institution.serviceUrl).length,
+    },
+    {
+      label: "Servicios arriba",
+      value: healthSnapshots.filter((health) => health.status === "UP").length,
+    },
+    {
+      label: "Requieren revision",
+      value: healthSnapshots.filter((health) => health.status === "DOWN").length,
+    },
+  ];
 }
 
 function nullableText(value: string) {
