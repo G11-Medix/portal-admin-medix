@@ -7,19 +7,21 @@ export async function GET(request: NextRequest) {
   const code = requestUrl.searchParams.get("code");
 
   if (!code) {
-    const redirectUrl = new URL("/login", request.url);
-    redirectUrl.searchParams.set("message", "El enlace no es valido o expiro");
-    return NextResponse.redirect(redirectUrl);
+    return redirectToInvalidLink(request);
   }
 
   const supabase = await createClient();
   const { error } = await supabase.auth.exchangeCodeForSession(code);
-
   if (error) {
-    const redirectUrl = new URL("/login", request.url);
-    redirectUrl.searchParams.set("message", "El enlace no es valido o expiro");
-    return NextResponse.redirect(redirectUrl);
+    return redirectToInvalidLink(request);
   }
 
   return NextResponse.redirect(new URL("/dashboard", request.url));
+}
+
+function redirectToInvalidLink(request: NextRequest) {
+  const redirectUrl = new URL("/login", request.url);
+  redirectUrl.searchParams.set("message", "El enlace no es valido o expiro");
+
+  return NextResponse.redirect(redirectUrl);
 }

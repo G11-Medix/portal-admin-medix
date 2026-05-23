@@ -24,7 +24,7 @@ export function LoginForm({ initialMessage }: LoginFormProps) {
     setStatusMessage("");
 
     if (!isEmailValid(email)) {
-      setErrorMessage("Ingresa un email valido");
+      setErrorMessage("Ingresa un correo valido");
       return;
     }
 
@@ -38,19 +38,19 @@ export function LoginForm({ initialMessage }: LoginFormProps) {
     });
 
     if (error) {
-      setErrorMessage("No pudimos enviar el enlace. Intenta nuevamente.");
+      setErrorMessage("No pudimos iniciar el acceso. Intenta nuevamente.");
       setIsLoading(false);
       return;
     }
 
-    setStatusMessage("Te enviamos un enlace de acceso a tu correo");
+    setStatusMessage("Te enviamos las instrucciones de acceso a tu correo");
     setIsLoading(false);
   }
 
   return (
     <form className="space-y-4" onSubmit={handleSubmit}>
       <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
-        Correo electronico
+        Correo corporativo
         <input
           type="email"
           name="email"
@@ -69,10 +69,12 @@ export function LoginForm({ initialMessage }: LoginFormProps) {
         disabled={isLoading}
         className="w-full rounded-lg bg-cyan-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-cyan-800 disabled:cursor-not-allowed disabled:opacity-70"
       >
-        {isLoading ? "Enviando..." : "Enviar enlace de acceso"}
+        {isLoading ? "Enviando..." : "Continuar"}
       </button>
 
-      <p className="text-sm text-slate-600">Revisa tu correo y abre el enlace para entrar</p>
+      <p className="text-sm text-slate-600">
+        Recibiras un correo para confirmar tu identidad y entrar al portal.
+      </p>
 
       {statusMessage ? (
         <p className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">

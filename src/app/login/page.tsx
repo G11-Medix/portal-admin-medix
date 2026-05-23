@@ -11,8 +11,8 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   return (
     <main className="flex min-h-screen items-center justify-center bg-linear-to-b from-cyan-50 to-slate-100 px-4 py-10">
       <AuthCard
-        title="Ingresa con Magic Link"
-        description="Accede al portal interno de Medix con un enlace seguro enviado a tu correo."
+        title="Acceso al portal"
+        description="Ingresa con tu correo corporativo para gestionar la operacion de Medix de forma segura."
       >
         <LoginForm initialMessage={params.message} />
       </AuthCard>
